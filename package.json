@@ -1,0 +1,16 @@
+{
+  "name": "notes-app",
+  "version": "1.0.0",
+  "description": "CRUD notes application",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Samuele Maurizi",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.17.1",
+    "express-handlebars": "^3.1.0",
+    "mongoose": "^5.7.3"
+  }
+}
