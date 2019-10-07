@@ -1,7 +1,22 @@
 const express = require('express');
+const mongoose = require('mongoose');
 const exphbs = require('express-handlebars');
+const chalk = require('chalk');
 
 const app = express();
+
+// Connect to mongoose
+mongoose
+  .connect('mongodb://localhost/notes-app', {
+    useNewUrlParser: true,
+    useUnifiedTopology: true
+  })
+  .then(() => console.log(chalk.green('Connected to MongoDB...')))
+  .catch(err => console.log(chalk.red(err)));
+
+// Import the Model Idea
+require('./models/Idea');
+const Idea = mongoose.model('idea');
 
 // Handlebar Middleware
 app.engine('handlebars', exphbs());
