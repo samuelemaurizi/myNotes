@@ -1,9 +1,15 @@
 const express = require('express');
 const mongoose = require('mongoose');
+const path = require('path');
 const exphbs = require('express-handlebars');
 const bodyParser = require('body-parser');
 const methodOverride = require('method-override');
 const chalk = require('chalk');
+const flash = require('connect-flash');
+const session = require('express-session');
+
+const notes = require('./routes/notes');
+const users = require('./routes/users.js');
 
 const app = express();
 
@@ -16,10 +22,6 @@ mongoose
   .then(() => console.log(chalk.green('Connected to MongoDB...')))
   .catch(err => console.log(chalk.red(err)));
 
-// Import the Model Idea
-require('./models/Idea');
-const Idea = mongoose.model('idea');
-
 /////////////////////////////
 // MIDDLEWARES
 
@@ -31,10 +33,32 @@ app.set('view engine', 'handlebars');
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 
+// Static Folder
+app.use(express.static(path.join(__dirname, 'public')));
+
 // Method Override
 app.use(methodOverride('_method'));
 
-/////////////////////////////
+// Express Session
+app.use(
+  session({
+    secret: 'secret',
+    resave: true,
+    saveUninitialized: true
+  })
+);
+
+// Flash
+app.use(flash());
+
+// Global variables
+app.use(function(req, res, next) {
+  res.locals.success_msg = req.flash('success_msg');
+  res.locals.error_msg = req.flash('error_msg');
+  res.locals.error = req.flash('error');
+  next();
+});
+
 // ROUTES
 app.get('/', (req, res) => {
   const title = 'My Notes';
@@ -43,82 +67,12 @@ app.get('/', (req, res) => {
   });
 });
 
-app.get('/notes', (req, res) => {
-  Idea.find({})
-    .sort({ date: 'desc' })
-    .then(ideas => {
-      res.render('notes/index', {
-        ideas
-      });
-    });
-});
-
-app.get('/notes/edit/:id', (req, res) => {
-  Idea.findOne({
-    _id: req.params.id
-  }).then(idea => {
-    res.render('notes/edit', {
-      idea
-    });
-  });
-});
-
-app.get('/notes/add', (req, res) => {
-  res.render('notes/add');
-});
-
-app.post('/notes', (req, res) => {
-  const { title, description } = req.body;
-  const errors = [];
-
-  if (!req.body.title) {
-    errors.push({ text: 'Dude! Add some title!' });
-  }
-  if (!req.body.description) {
-    errors.push({ text: 'Dude! You should add some text!' });
-  }
-  if (errors.length > 0) {
-    res.render('notes/add', {
-      errors: errors,
-      title,
-      description
-    });
-  } else {
-    console.log(req.body);
-    const newNote = {
-      title,
-      description
-    };
-
-    new Idea(newNote).save().then(idea => {
-      res.redirect('/notes');
-    });
-  }
-});
-
-app.put('/notes/:id', (req, res) => {
-  Idea.findOne({
-    _id: req.params.id
-  }).then(idea => {
-    idea.title = req.body.title;
-    idea.description = req.body.description;
-
-    idea.save().then(idea => {
-      console.log(chalk.yellow(idea));
-      res.redirect('/notes');
-    });
-  });
-});
-
-app.delete('/notes/:id', (req, res) => {
-  Idea.deleteOne({ _id: req.params.id }).then(() => {
-    res.redirect('/notes');
-  });
-});
-
 app.get('/about', (req, res) => {
   res.render('about');
 });
+
+app.use('/notes', notes);
+app.use('/users', users);
 
 const PORT = 5000;
 app.listen(PORT, () => console.log(`Server started on port: ${PORT}`));
