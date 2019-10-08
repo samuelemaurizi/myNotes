@@ -1,0 +1,16 @@
+<h1>Notes List</h1>
+{{#each ideas}}
+  <div class="card card-body mb-4">
+    <h4>{{ title }}</h4>
+    <p>{{description}}</p>
+    <div class="row">
+      <a href="/notes/edit/{{id}}" class="btn btn-warning col-2">Edit</a>
+      <form class="col-2" method="POST" action="/notes/{{id}}?_method=DELETE">
+        <input type="hidden" name="_method" value="DELETE">
+        <input type="submit" class="btn btn-danger" value="Delete" />
+      </form>
+    </div>
+  </div>
+{{else}}
+  <h3>No notes founded</h3>
+{{/each}}
