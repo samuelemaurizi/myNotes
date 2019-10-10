@@ -2,14 +2,16 @@ const express = require('express');
 const mongoose = require('mongoose');
 const chalk = require('chalk');
 
+const { ensureAuthenticated } = require('../helpers/auth');
+
 const router = express.Router();
 
 // Import the Model Idea
 require('../models/Idea');
 const Idea = mongoose.model('idea');
 
-router.get('/', (req, res) => {
-  Idea.find({})
+router.get('/', ensureAuthenticated, (req, res) => {
+  Idea.find({ user: req.user.id })
     .sort({ date: 'desc' })
     .then(ideas => {
       res.render('notes/index', {
@@ -18,17 +20,22 @@ router.get('/', (req, res) => {
     });
 });
 
-router.get('/edit/:id', (req, res) => {
+router.get('/edit/:id', ensureAuthenticated, (req, res) => {
   Idea.findOne({
     _id: req.params.id
   }).then(idea => {
-    res.render('notes/edit', {
-      idea
-    });
+    if (idea.user !== req.user.id) {
+      req.flash('error_msg', 'Dude! Is not your note! You are not authorized');
+      res.redirect('notes');
+    } else {
+      res.render('notes/edit', {
+        idea
+      });
+    }
   });
 });
 
-router.get('/add', (req, res) => {
+router.get('/add', ensureAuthenticated, (req, res) => {
   res.render('notes/add');
 });
 
@@ -52,7 +59,8 @@ router.post('/', (req, res) => {
     console.log(req.body);
     const newNote = {
       title,
-      description
+      description,
+      user: req.user.id
     };
 
     new Idea(newNote).save().then(idea => {
@@ -62,7 +70,7 @@ router.post('/', (req, res) => {
   }
 });
 
-router.put('/:id', (req, res) => {
+router.put('/:id', ensureAuthenticated, (req, res) => {
   Idea.findOne({
     _id: req.params.id
   }).then(idea => {
@@ -77,7 +85,7 @@ router.put('/:id', (req, res) => {
   });
 });
 
-router.delete('/:id', (req, res) => {
+router.delete('/:id', ensureAuthenticated, (req, res) => {
   Idea.deleteOne({ _id: req.params.id }).then(() => {
     req.flash('success_msg', 'Note deleted!');
     res.redirect('/notes');

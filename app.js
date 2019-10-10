@@ -12,6 +12,8 @@ const session = require('express-session');
 const notes = require('./routes/notes');
 const users = require('./routes/users.js');
 
+const db = require('./config/db');
+
 // Passport Config
 require('./config/passport')(passport);
 
@@ -19,7 +21,7 @@ const app = express();
 
 // Connect to mongoose
 mongoose
-  .connect('mongodb://localhost/notes-app', {
+  .connect(db.mongoURI, {
     useNewUrlParser: true,
     useUnifiedTopology: true
   })
@@ -85,5 +87,5 @@ app.get('/about', (req, res) => {
 app.use('/notes', notes);
 app.use('/users', users);
 
-const PORT = 5000;
+const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server started on port: ${PORT}`));
