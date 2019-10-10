@@ -2,3 +2,4 @@
 
 /config/db.js
 logfile.log
+debug.log
